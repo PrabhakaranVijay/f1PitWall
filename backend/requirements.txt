@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+websockets
+httpx
+redis
+asyncpg
+sqlalchemy
+pydantic
+alembic
+python-dotenv
+psycopg2-binary
+requests
