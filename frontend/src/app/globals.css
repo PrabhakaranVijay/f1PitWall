@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-f1-red: #e10600;
+  --color-f1-dark: #15151e;
+  --color-f1-panel: #1f1f27;
+  --color-f1-text: #ffffff;
+  --color-f1-muted: #888888;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-f1-dark);
+    color: var(--color-f1-text);
+  }
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
