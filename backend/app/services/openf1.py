@@ -6,6 +6,8 @@ from typing import Any
 
 import httpx
 
+from app.infrastructure.openf1_client import openf1_client
+
 logger = logging.getLogger(__name__)
 
 OPENF1_BASE_URL = "https://api.openf1.org/v1"
@@ -15,11 +17,10 @@ DEFAULT_TIMEOUT = httpx.Timeout(15.0, connect=10.0)
 async def _get_json(
     endpoint: str,
     params: dict[str, Any] | None = None,
+    *,
+    allow_404: bool = False,
 ) -> list[dict[str, Any]]:
-    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-        response = await client.get(f"{OPENF1_BASE_URL}/{endpoint}", params=params)
-        response.raise_for_status()
-        return response.json()
+    return await openf1_client.get(endpoint, params, allow_404=allow_404)
 
 
 async def get_positions(session_key: int | str):
@@ -47,7 +48,7 @@ async def get_stints(session_key: int | str):
 
 
 async def get_overtakes(session_key: int | str):
-    return await _get_json("overtakes", {"session_key": session_key})
+    return await _get_json("overtakes", {"session_key": session_key}, allow_404=True)
 
 
 async def get_race_control(session_key: int | str):
@@ -96,16 +97,19 @@ async def fetch_track_data(session_key: int, driver_number: int, lap_number: int
     Applies simple smoothing, normalization and maps sector information.
     """
     async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-        lap_url = (
-            f"{OPENF1_BASE_URL}/laps?session_key={session_key}"
-            f"&driver_number={driver_number}&lap_number={lap_number}"
+        lap_rows = await _get_json(
+            "laps",
+            {
+                "session_key": session_key,
+                "driver_number": driver_number,
+                "lap_number": lap_number,
+            },
         )
-        lap_resp = await client.get(lap_url)
 
-        if lap_resp.status_code != 200 or not lap_resp.json():
+        if not lap_rows:
             return None
 
-        lap_data = lap_resp.json()[0]
+        lap_data = lap_rows[0]
         date_start_str = lap_data.get("date_start")
 
         if not date_start_str:
@@ -131,12 +135,15 @@ async def fetch_track_data(session_key: int, driver_number: int, lap_number: int
         start_fmt = date_start.isoformat()[:23]
         end_fmt = date_end.isoformat()[:23]
 
-        loc_url = (
-            f"{OPENF1_BASE_URL}/location?session_key={session_key}"
-            f"&driver_number={driver_number}&date>={start_fmt}&date<={end_fmt}"
+        loc_resp = await client.get(
+            f"{OPENF1_BASE_URL}/location",
+            params={
+                "session_key": session_key,
+                "driver_number": driver_number,
+                "date>=": start_fmt,
+                "date<=": end_fmt,
+            },
         )
-        loc_resp = await client.get(loc_url)
-
         if loc_resp.status_code != 200:
             return None
 

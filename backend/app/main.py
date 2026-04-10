@@ -1,10 +1,9 @@
-import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+import logging
 
-from app.workers.ingestion import ingestion_loop
 from app.api.endpoints import router as api_router
 from app.websocket.stream import router as ws_router
 
@@ -12,14 +11,11 @@ from app.routes.championship import router as championship_router
 from app.routes.track import router as track_router
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Start polling worker
-    task = asyncio.create_task(ingestion_loop())
     yield
-    # Shutdown: cancel task
-    task.cancel()
 
 app = FastAPI(title="PitWall Dashboard API", lifespan=lifespan)
 

@@ -1,24 +1,15 @@
-import os
-
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from fastapi import APIRouter, HTTPException
 import httpx
-from app.database import get_db
+from app.application.race_snapshot import race_snapshot_service
 from app.config import settings
-import os
 import requests
 import time
 from datetime import datetime, timezone
 
 router = APIRouter()
 
-# YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
-YOUTUBE_API_KEY = "AIzaSyCHJ4mcNDF56TQrmM9euig1DwLTSazxJq4"
-print("YOUTUBE KEY:", YOUTUBE_API_KEY)
-CHANNEL_ID = 'UC3kxJQ9RfaS5CKeYbbFMi4Q' #"UCB_qr75-ydFVKSF9Dmo6izg"  # F1 official channel UCB_qr75-ydFVKSF9Dmo6izg
-# CHANNEL_ID = os.getenv("CHANNEL_ID", CHANNEL_ID)
-print("CHANNEL ID:", CHANNEL_ID)
+YOUTUBE_API_KEY = settings.YOUTUBE_API_KEY
+CHANNEL_ID = settings.CHANNEL_ID or "UC3kxJQ9RfaS5CKeYbbFMi4Q"
 
 cache = {"data": None, "timestamp": 0}
 CACHE_TTL = 30  # seconds
@@ -172,6 +163,11 @@ def get_f1_highlights():
             break
 
     return videos
+
+
+@router.get("/race/snapshot")
+async def get_race_snapshot(session: str = "latest"):
+    return await race_snapshot_service.build_snapshot(session)
 
 # @router.get("/championship")
 # async def get_championship():
