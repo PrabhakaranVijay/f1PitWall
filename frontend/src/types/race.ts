@@ -67,3 +67,15 @@ export type RaceSnapshot = {
   weather: RawWeatherReading | null;
   highlights: RaceEvent[];
 };
+
+type TeamAPI = {
+  team_name: string;
+  points_current: number;
+  position_current: number;
+};
+
+type TeamStanding = {
+  team: string;
+  points: number;
+  position: number;
+};

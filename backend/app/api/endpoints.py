@@ -11,7 +11,8 @@ router = APIRouter()
 YOUTUBE_API_KEY = settings.YOUTUBE_API_KEY
 CHANNEL_ID = settings.CHANNEL_ID or "UC3kxJQ9RfaS5CKeYbbFMi4Q"
 
-cache = {"data": None, "timestamp": 0}
+championship_cache = {"data": None, "timestamp": 0}
+constructor_standings_cache = {"data": None, "timestamp": 0}
 CACHE_TTL = 30  # seconds
 
 
@@ -208,14 +209,19 @@ async def get_championship(limit: int = 5):
 
     now = time.time()
 
-    if cache["data"] and now - cache["timestamp"] < CACHE_TTL:
-        return cache["data"][:limit]
+    if championship_cache["data"] and now - championship_cache["timestamp"] < CACHE_TTL:
+        return championship_cache["data"][:limit]
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
         data = response.json()
 
-    standings = data["MRData"]["StandingsTable"]["StandingsLists"][0]["DriverStandings"]
+    standings_lists = data.get("MRData", {}).get("StandingsTable", {}).get("StandingsLists", [])
+
+    if not standings_lists:
+        return []
+
+    standings = standings_lists[0].get("DriverStandings", [])
 
     drivers = []
 
@@ -237,10 +243,55 @@ async def get_championship(limit: int = 5):
             "code": driver["code"]
         })
 
-    cache["data"] = drivers
-    cache["timestamp"] = now
+    championship_cache["data"] = drivers
+    championship_cache["timestamp"] = now
 
     return drivers[:limit]
+
+
+@router.get("/constructor-standings")
+async def get_constructor_standings(limit: int = 11):
+
+    year = datetime.now().year
+    url = f"https://api.jolpi.ca/ergast/f1/{year}/constructorstandings/"
+
+    now = time.time()
+
+    if (
+        constructor_standings_cache["data"]
+        and now - constructor_standings_cache["timestamp"] < CACHE_TTL
+    ):
+        return constructor_standings_cache["data"][:limit]
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        data = response.json()
+
+    standings_lists = data.get("MRData", {}).get("StandingsTable", {}).get("StandingsLists", [])
+
+    if not standings_lists:
+        return []
+
+    standings = standings_lists[0].get("ConstructorStandings", [])
+
+    constructors = []
+
+    for entry in standings:
+        if "position" not in entry or "Constructor" not in entry:
+            continue
+
+        constructor = entry["Constructor"]
+
+        constructors.append({
+            "team_name": constructor.get("name"),
+            "points_current": int(entry.get("points", 0)),
+            "position_current": int(entry["position"]),
+        })
+
+    constructor_standings_cache["data"] = constructors
+    constructor_standings_cache["timestamp"] = now
+
+    return constructors[:limit]
 
 @router.get("/timeline")
 async def get_race_timeline(limit: int = 5):
