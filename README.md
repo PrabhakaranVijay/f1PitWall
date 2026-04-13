@@ -4,8 +4,8 @@
 
 <!-- <h4>Live Project Link - https://.../</h4> -->
 
-<br/>
-<br/>
+<!-- <br/>
+<br/> -->
 
 <!-- -----------------------  Header  ----------------------------- -->
 <h1 align="center">PitWall</h1>
@@ -33,6 +33,8 @@
 	🚧  Service Sphere 🚀 Under construction...  🚧
 </h4>
 
+![Preview](Images/HomePage.png)
+
 <hr>
 
 <!-- ======================= Navigation ======================= -->
@@ -54,8 +56,6 @@
 ## 🎯 Project Overview
 
 **PitWall** is a production-grade, real-time Formula 1 analytics dashboard built for data-driven motorsport enthusiasts. It streams live telemetry, race positions, and session data directly from the [OpenF1 API](https://openf1.org) into a sleek, performant React web application.
-
-![PitWall Dashboard](https://images.unsplash.com/photo-1541421715694-df0a24eb5ab4?auto=format&fit=crop&q=80&w=1200) _(concept aesthetic)_
 
 ---
 
